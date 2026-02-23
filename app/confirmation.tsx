@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, BackHandler } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useOrders } from '../context/OrdersContext';
-import { sendOrderToWhatsApp } from '../utils/whatsapp';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ConfirmationScreen() {
@@ -22,14 +21,13 @@ export default function ConfirmationScreen() {
         return () => backHandler.remove();
     }, []);
 
-    // Trigger WhatsApp immediately
-    useEffect(() => {
-        if (order) {
-            sendOrderToWhatsApp(order.id, order.items, order.total, order.instructions);
-        }
-    }, [order]);
-
-    if (!order) return <View><Text>Orden no encontrada</Text></View>;
+    if (!order) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.subtitle}>Cargando tu orden...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>

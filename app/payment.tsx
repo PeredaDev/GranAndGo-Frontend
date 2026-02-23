@@ -20,11 +20,11 @@ export default function PaymentScreen() {
 
             if (result.status === 'approved') {
                 // 2. Create Local Order on Success
-                // In a real app, the backend might handle this during capture, 
-                // but we'll keep the local context sync for now.
                 const orderId = await addOrder(items, total, specialInstructions);
                 clearCart();
-                router.replace({ pathname: '/confirmation', params: { orderId } });
+                // Close the Cart/Payment modal stack completely, then push Confirmation onto the main stack
+                router.dismissAll();
+                router.push({ pathname: '/confirmation', params: { orderId } });
             } else if (result.status === 'cancelled') {
                 Alert.alert("Pago cancelado", "Has cancelado el proceso de pago.");
             } else {

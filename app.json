@@ -49,6 +49,12 @@
         "projectId": "ca679f1f-00e7-4320-889b-09c3778ba15b"
       }
     },
-    "owner": "peredas-organization"
+    "owner": "peredas-organization",
+    "updates": {
+      "url": "https://u.expo.dev/ca679f1f-00e7-4320-889b-09c3778ba15b"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

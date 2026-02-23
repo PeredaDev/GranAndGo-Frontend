@@ -14,30 +14,67 @@ const STORAGE_KEY = '@menu_app_orders';
 
 export const OrderService = {
     createOrder: async (items: CartItem[], total: number, instructions?: string): Promise<string> => {
-        await delay(1000); // Simulate server
-        const newOrder: OrderModel = {
-            id: Math.random().toString(36).substr(2, 9).toUpperCase(),
-            date: new Date().toISOString(),
-            items,
-            total,
-            instructions,
-        };
+        try {
+            // The backend expects `OrderOption.Id` to be an integer (Primary Key). 
+            // The frontend CartItem contains string IDs (like "sugar_free"). 
+            // Strip the string IDs from the payload so ASP.NET model binding doesn't throw a 400 Bad Request.
+            const payloadItems = items.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                category: item.category,
+                toGoFee: item.toGoFee,
+                selectedOptions: item.selectedOptions ? item.selectedOptions.map(opt => ({
+                    name: opt.name,
+                    price: opt.price
+                })) : []
+            }));
 
-        // Persist
-        const existing = await OrderService.getOrders();
-        const updated = [newOrder, ...existing];
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: payloadItems,
+                    total,
+                    instructions
+                })
+            });
 
-        return newOrder.id;
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error("Server error response:", errText);
+                throw new Error('Failed to create order on the server: ' + errText);
+            }
+
+            const data = await response.json();
+            return data.id.toString(); // API returns an integer ID, convert to string for frontend routing
+        } catch (error) {
+            console.error('Error creating order:', error);
+            throw error;
+        }
     },
 
     getOrders: async (): Promise<OrderModel[]> => {
-        await delay(500);
         try {
-            const json = await AsyncStorage.getItem(STORAGE_KEY);
-            return json ? JSON.parse(json) : [];
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/orders`);
+
+            if (!response.ok) {
+                console.error("Failed to load orders from API", await response.text());
+                return [];
+            }
+
+            const data = await response.json();
+
+            // Map the integer IDs back to strings so the frontend components don't break
+            return data.map((o: any) => ({
+                ...o,
+                id: o.id.toString()
+            }));
+
         } catch (e) {
-            console.error("Failed to load orders", e);
+            console.error("Failed to fetch orders array", e);
             return [];
         }
     }
