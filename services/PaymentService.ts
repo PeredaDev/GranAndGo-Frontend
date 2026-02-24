@@ -51,10 +51,11 @@ export const PaymentService = {
     startPayPalFlow: async (amount: number) => {
         try {
             // 1. Create Order
-            // Use the current path instead of a non-existent 'paypal/success' to avoid unhandled router exceptions.
-            // When returning, Expo will just refocus the current screen running this flow.
-            const returnUrl = Linking.createURL('payment');
-            const cancelUrl = Linking.createURL('payment');
+            // Use a specific, non-application route for the redirect.
+            // When returning, Expo Router will quickly render the blank dummy component 
+            // instead of triggering a full navigation override on an active screen like `/payment`.
+            const returnUrl = Linking.createURL('paypal-redirect');
+            const cancelUrl = Linking.createURL('paypal-redirect');
             const approveLink = await PaymentService.createOrder(amount, 'MXN', returnUrl, cancelUrl);
 
             // 2. Open Browser
